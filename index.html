@@ -121,6 +121,12 @@
   .car-btn .cb-logo img { width: 100%; height: 100%; object-fit: cover; }
   .car-btn .cb-name { font-size: 16px; font-weight: 700; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .car-section { grid-column: 1 / -1; font-size: 13px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.05em; padding: 6px 4px 0; }
+
+  .car-country-bar { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px; flex-shrink: 0; scrollbar-width: none; }
+  .car-country-bar::-webkit-scrollbar { display: none; }
+  .car-cc { flex-shrink: 0; padding: 12px 18px; border-radius: 100px; background: var(--glass); border: 1px solid var(--glass-line); font-size: 16px; font-weight: 700; color: var(--text-dim); cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 7px; }
+  .car-cc.active { background: var(--text); color: #000; border-color: var(--text); }
+  .car-cc .f { font-size: 20px; }
 </style>
 </head>
 <body>
@@ -184,6 +190,7 @@
     </div>
     <button class="car-play" id="carPlay"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
   </div>
+  <div class="car-country-bar" id="carCountryBar"></div>
   <div class="car-grid" id="carGrid"></div>
 </div>
 <audio id="audio" crossorigin="anonymous"></audio>
@@ -292,23 +299,41 @@ function renderGenreFilters() {
   } catch(e){}
 })();
 
-function openCarMode() { $('carMode').classList.add('show'); $('carCountryTitle').textContent = state.country.name; renderCarGrid(); syncCarNow(); }
+async function openCarMode() { $('carMode').classList.add('show'); $('carCountryTitle').textContent = state.country.name; renderCarCountries(); renderCarGrid(); syncCarNow(); if (popularesData.length === 0) { await loadPopulares(); renderCarGrid(); } }
 function closeCarMode() { $('carMode').classList.remove('show'); }
 $('carToggle').onclick = openCarMode;
 $('carExit').onclick = closeCarMode;
+function renderCarCountries() {
+  const bar = $('carCountryBar');
+  bar.innerHTML = '';
+  COUNTRIES.forEach((c) => {
+    const b = document.createElement('div');
+    b.className = 'car-cc' + (c.code === state.country.code ? ' active' : '');
+    b.innerHTML = '<span class="f">' + c.flag + '</span>' + c.name;
+    b.onclick = () => { state.country = c; $('curFlag').textContent = c.flag; $('curName').textContent = c.name; $('carCountryTitle').textContent = c.name; loadStations().then(() => renderCarGrid()); renderCarCountries(); };
+    bar.appendChild(b);
+  });
+}
+let popularesData = [];
+async function loadPopulares() {
+  try { const r = await fetch('/api/populares'); popularesData = await r.json(); } catch(e) { popularesData = []; }
+}
 function renderCarGrid() {
   const g = $('carGrid');
   const favs = state.favs;
   const favIds = new Set(favs.map(f => f.stationuuid));
-  const pool = [...state.curated, ...state.stations].filter(s => !favIds.has(s.stationuuid));
-  const top = pool.slice(0, 6);
   let h = '';
-  if (favs.length > 0) { h += '<div class="car-section">Favoritos</div>' + favs.map(carBtnHTML).join(''); }
-  if (top.length > 0) { h += '<div class="car-section">' + (favs.length ? 'Mas escuchadas' : 'Emisoras') + '</div>' + top.map(carBtnHTML).join(''); }
-  if (!h) h = '<div class="car-section">Marca favoritos o elige un pais con emisoras</div>';
+  if (favs.length > 0) { h += '<div class="car-section">Mis favoritos</div>' + favs.map(carBtnHTML).join(''); }
+  // Emisoras del pais seleccionado (curadas + browser top)
+  const pais = [...state.curated, ...state.stations].filter(s => !favIds.has(s.stationuuid)).slice(0, 6);
+  if (pais.length > 0) { h += '<div class="car-section">En ' + state.country.name + '</div>' + pais.map(carBtnHTML).join(''); }
+  // Populares de LATAM (globales, del backend)
+  const pop = popularesData.filter(s => !favIds.has(s.stationuuid)).slice(0, 8);
+  if (pop.length > 0) { h += '<div class="car-section">Populares LATAM</div>' + pop.map(carBtnHTML).join(''); }
+  if (!h) h = '<div class="car-section">Marca favoritos tocando la estrella</div>';
   g.innerHTML = h;
   g.querySelectorAll('.car-btn').forEach(btn => {
-    btn.onclick = () => { const all = [...state.favs, ...state.curated, ...state.stations]; const st = all.find(s => s.stationuuid === btn.dataset.uuid); if (st) { playStation(st); syncCarNow(); renderCarGrid(); } };
+    btn.onclick = () => { const all = [...state.favs, ...state.curated, ...state.stations, ...popularesData]; const st = all.find(s => s.stationuuid === btn.dataset.uuid); if (st) { playStation(st); syncCarNow(); renderCarGrid(); } };
   });
 }
 function carBtnHTML(st) {
@@ -536,7 +561,7 @@ $('curName').textContent = state.country.name;
   } catch(e){}
 })();
 
-function openCarMode() { $('carMode').classList.add('show'); $('carCountryTitle').textContent = state.country.name; renderCarGrid(); syncCarNow(); }
+async function openCarMode() { $('carMode').classList.add('show'); $('carCountryTitle').textContent = state.country.name; renderCarCountries(); renderCarGrid(); syncCarNow(); if (popularesData.length === 0) { await loadPopulares(); renderCarGrid(); } }
 function closeCarMode() { $('carMode').classList.remove('show'); }
 $('carToggle').onclick = openCarMode;
 $('carExit').onclick = closeCarMode;

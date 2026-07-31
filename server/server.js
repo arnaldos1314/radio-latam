@@ -67,6 +67,37 @@ function fetchIcyMetadata(streamUrl) {
   });
 }
 
+// ---------- Populares de LATAM (top por pais combinado, cache 1h) ----------
+let popularesCache = { data: null, ts: 0 };
+const POP_TTL = 3600000;
+const POP_COUNTRIES = ['MX','CO','AR','VE','CL','PE','EC','DO','GT','PR'];
+
+function httpsGetJson(url) {
+  return new Promise((resolve) => {
+    https.get(url, { headers: { 'User-Agent': 'RadioLatam/1.0' }, timeout: 8000 }, (res) => {
+      let body = '';
+      res.on('data', (c) => body += c);
+      res.on('end', () => { try { resolve(JSON.parse(body)); } catch { resolve([]); } });
+    }).on('error', () => resolve([])).on('timeout', function(){ this.destroy(); resolve([]); });
+  });
+}
+
+async function getPopulares() {
+  if (popularesCache.data && Date.now() - popularesCache.ts < POP_TTL) return popularesCache.data;
+  const perCountry = await Promise.all(POP_COUNTRIES.map((cc) =>
+    httpsGetJson('https://de1.api.radio-browser.info/json/stations/search?countrycode=' + cc + '&order=clickcount&reverse=true&hidebroken=true&limit=3')
+  ));
+  const seen = new Set();
+  const out = [];
+  perCountry.forEach((list) => {
+    (list || []).forEach((s) => {
+      if (s.url_resolved && !seen.has(s.stationuuid)) { seen.add(s.stationuuid); out.push(s); }
+    });
+  });
+  popularesCache = { data: out, ts: Date.now() };
+  return out;
+}
+
 const MIME = { '.html':'text/html', '.js':'text/javascript', '.json':'application/json', '.css':'text/css', '.png':'image/png', '.svg':'image/svg+xml', '.ico':'image/x-icon' };
 
 const server = http.createServer(async (req, res) => {
@@ -88,6 +119,13 @@ const server = http.createServer(async (req, res) => {
     const alive = checked.filter((x) => x.alive).map((x) => x.e);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify(alive));
+  }
+
+
+  if (u.pathname === '/api/populares') {
+    const pop = await getPopulares();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(pop));
   }
 
   let filePath = path.join(WEB, u.pathname === '/' ? 'index.html' : u.pathname);
