@@ -95,6 +95,32 @@
   .grid-item .flag { font-size: 34px; line-height: 1; }
   .grid-item .label { font-size: 12.5px; font-weight: 600; text-align: center; color: var(--text-dim); }
   .grid-item.active .label { color: var(--text); }
+
+  .car-toggle { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: var(--glass); border: 1px solid var(--glass-line); cursor: pointer; margin-left: 8px; flex-shrink: 0; }
+  .car-toggle svg { width: 22px; height: 22px; }
+  #carMode { position: fixed; inset: 0; z-index: 200; background: linear-gradient(180deg, var(--amb2) 0%, var(--amb3) 100%); display: none; flex-direction: column; padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 16px); }
+  #carMode.show { display: flex; }
+  .car-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-shrink: 0; }
+  .car-header .title { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+  .car-exit { display: flex; align-items: center; gap: 6px; background: var(--glass-strong); border: 1px solid var(--glass-line); border-radius: 100px; padding: 10px 18px; color: var(--text); font-size: 16px; font-weight: 700; cursor: pointer; }
+  .car-now { background: var(--glass-strong); border: 1px solid var(--glass-line); border-radius: 24px; padding: 20px; display: flex; align-items: center; gap: 18px; margin-bottom: 16px; flex-shrink: 0; backdrop-filter: blur(20px); }
+  .car-now-logo { width: 76px; height: 76px; border-radius: 18px; flex-shrink: 0; background: rgba(255,255,255,0.1); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; }
+  .car-now-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .car-now-info { flex: 1; min-width: 0; }
+  .car-now-name { font-size: 24px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.02em; }
+  .car-now-song { font-size: 16px; color: #ffd60a; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .car-now-status { font-size: 15px; color: var(--text-dim); margin-top: 4px; }
+  .car-play { width: 76px; height: 76px; border-radius: 50%; flex-shrink: 0; background: var(--text); color: #000; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .car-play svg { width: 34px; height: 34px; }
+  .car-grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-content: start; scrollbar-width: none; }
+  .car-grid::-webkit-scrollbar { display: none; }
+  .car-btn { background: var(--glass); border: 2px solid var(--glass-line); border-radius: 20px; padding: 20px 16px; min-height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; text-align: center; transition: transform 0.1s, background 0.15s; }
+  .car-btn:active { transform: scale(0.95); background: var(--glass-strong); }
+  .car-btn.playing { background: var(--glass-strong); border-color: #ffd60a; }
+  .car-btn .cb-logo { width: 44px; height: 44px; border-radius: 11px; background: rgba(255,255,255,0.1); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: var(--text); }
+  .car-btn .cb-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .car-btn .cb-name { font-size: 16px; font-weight: 700; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .car-section { grid-column: 1 / -1; font-size: 13px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.05em; padding: 6px 4px 0; }
 </style>
 </head>
 <body>
@@ -111,6 +137,7 @@
         <span id="curName">Mexico</span>
         <span class="chev">&#9660;</span>
       </button>
+      <div class="car-toggle" id="carToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l1.5-4.5A2 2 0 018.4 5h7.2a2 2 0 011.9 1.5L19 11m-14 0h14m-14 0v6m14-6v6"/><circle cx="7.5" cy="14.5" r="1"/><circle cx="16.5" cy="14.5" r="1"/></svg></div>
     </div>
     <div class="tabs">
       <button class="tab active" data-tab="explore">Explorar</button>
@@ -142,6 +169,22 @@
 <div class="modal" id="modal">
   <div class="modal-head"><h2>Elige pais</h2><button class="modal-close" id="modalClose">&#10005;</button></div>
   <div class="grid" id="grid"></div>
+</div>
+<div id="carMode">
+  <div class="car-header">
+    <div class="title" id="carCountryTitle">Radio</div>
+    <div class="car-exit" id="carExit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 18L18 6M6 6l12 12"/></svg>Salir</div>
+  </div>
+  <div class="car-now">
+    <div class="car-now-logo" id="carNowLogo">&#128251;</div>
+    <div class="car-now-info">
+      <div class="car-now-name" id="carNowName">Elige una emisora</div>
+      <div class="car-now-song" id="carNowSong" style="display:none"></div>
+      <div class="car-now-status" id="carNowStatus">&mdash;</div>
+    </div>
+    <button class="car-play" id="carPlay"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+  </div>
+  <div class="car-grid" id="carGrid"></div>
 </div>
 <audio id="audio" crossorigin="anonymous"></audio>
 <canvas id="canvas" width="24" height="24" style="display:none"></canvas>
@@ -248,6 +291,44 @@ function renderGenreFilters() {
     applyAmbientFromLogo(st);
   } catch(e){}
 })();
+
+function openCarMode() { $('carMode').classList.add('show'); $('carCountryTitle').textContent = state.country.name; renderCarGrid(); syncCarNow(); }
+function closeCarMode() { $('carMode').classList.remove('show'); }
+$('carToggle').onclick = openCarMode;
+$('carExit').onclick = closeCarMode;
+function renderCarGrid() {
+  const g = $('carGrid');
+  const favs = state.favs;
+  const favIds = new Set(favs.map(f => f.stationuuid));
+  const pool = [...state.curated, ...state.stations].filter(s => !favIds.has(s.stationuuid));
+  const top = pool.slice(0, 6);
+  let h = '';
+  if (favs.length > 0) { h += '<div class="car-section">Favoritos</div>' + favs.map(carBtnHTML).join(''); }
+  if (top.length > 0) { h += '<div class="car-section">' + (favs.length ? 'Mas escuchadas' : 'Emisoras') + '</div>' + top.map(carBtnHTML).join(''); }
+  if (!h) h = '<div class="car-section">Marca favoritos o elige un pais con emisoras</div>';
+  g.innerHTML = h;
+  g.querySelectorAll('.car-btn').forEach(btn => {
+    btn.onclick = () => { const all = [...state.favs, ...state.curated, ...state.stations]; const st = all.find(s => s.stationuuid === btn.dataset.uuid); if (st) { playStation(st); syncCarNow(); renderCarGrid(); } };
+  });
+}
+function carBtnHTML(st) {
+  const playing = state.current && state.current.stationuuid === st.stationuuid;
+  const initial = (st.name||'?').trim().charAt(0).toUpperCase();
+  const logo = (st.favicon && st.favicon.startsWith('http')) ? '<img src="'+st.favicon+'" onerror="this.parentNode.textContent=\''+initial+'\'">' : initial;
+  return '<div class="car-btn '+(playing?'playing':'')+'" data-uuid="'+st.stationuuid+'"><div class="cb-logo">'+logo+'</div><div class="cb-name">'+escapeHtml(st.name.trim())+'</div></div>';
+}
+function syncCarNow() {
+  const st = state.current; if (!st) return;
+  $('carNowName').textContent = st.name.trim();
+  const initial = (st.name||'?').trim().charAt(0).toUpperCase();
+  $('carNowLogo').innerHTML = (st.favicon && st.favicon.startsWith('http')) ? '<img src="'+st.favicon+'" onerror="this.parentNode.textContent=\''+initial+'\'">' : initial;
+  $('carNowStatus').textContent = state.playing ? 'En vivo' : 'Pausado';
+  const song = $('nowSong').textContent;
+  if (song && $('nowSong').style.display !== 'none') { $('carNowSong').textContent = song; $('carNowSong').style.display = 'block'; } else { $('carNowSong').style.display = 'none'; }
+  $('carPlay').innerHTML = state.playing ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>' : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+}
+$('carPlay').onclick = () => { if (!state.current) return; if (!audio.src || audio.src === location.href) { playStation(state.current); return; } if (audio.paused) audio.play(); else audio.pause(); setTimeout(syncCarNow, 100); };
+
 renderGenreFilters(); loadStations(); chip.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); };
     el.appendChild(chip);
   });
@@ -394,8 +475,8 @@ function startNowPlaying(st) {
   poll(); state.nowTimer = setInterval(poll, 15000);
 }
 $('playBtn').onclick = () => { if (!state.current) return; if (!audio.src || audio.src === location.href) { playStation(state.current); return; } if (audio.paused) audio.play(); else audio.pause(); };
-audio.onplaying = () => { state.playing = true; $('nowStatus').textContent='En vivo'; $('nowStatus').classList.add('live'); $('playIcon').innerHTML='<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>'; renderList(); };
-audio.onpause = () => { state.playing = false; $('nowStatus').classList.remove('live'); $('nowStatus').textContent='Pausado'; $('playIcon').innerHTML='<path d="M8 5v14l11-7z"/>'; renderList(); };
+audio.onplaying = () => { state.playing = true; $('nowStatus').textContent='En vivo'; $('nowStatus').classList.add('live'); $('playIcon').innerHTML='<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>'; renderList(); if(typeof syncCarNow==='function') syncCarNow(); };
+audio.onpause = () => { state.playing = false; $('nowStatus').classList.remove('live'); $('nowStatus').textContent='Pausado'; $('playIcon').innerHTML='<path d="M8 5v14l11-7z"/>'; renderList(); if(typeof syncCarNow==='function') syncCarNow(); };
 audio.onwaiting = () => { $('nowStatus').textContent='Buffer...'; };
 audio.onerror = () => { $('nowStatus').textContent='No disponible'; };
 function updateMediaSession(st) {
@@ -454,6 +535,44 @@ $('curName').textContent = state.country.name;
     applyAmbientFromLogo(st);
   } catch(e){}
 })();
+
+function openCarMode() { $('carMode').classList.add('show'); $('carCountryTitle').textContent = state.country.name; renderCarGrid(); syncCarNow(); }
+function closeCarMode() { $('carMode').classList.remove('show'); }
+$('carToggle').onclick = openCarMode;
+$('carExit').onclick = closeCarMode;
+function renderCarGrid() {
+  const g = $('carGrid');
+  const favs = state.favs;
+  const favIds = new Set(favs.map(f => f.stationuuid));
+  const pool = [...state.curated, ...state.stations].filter(s => !favIds.has(s.stationuuid));
+  const top = pool.slice(0, 6);
+  let h = '';
+  if (favs.length > 0) { h += '<div class="car-section">Favoritos</div>' + favs.map(carBtnHTML).join(''); }
+  if (top.length > 0) { h += '<div class="car-section">' + (favs.length ? 'Mas escuchadas' : 'Emisoras') + '</div>' + top.map(carBtnHTML).join(''); }
+  if (!h) h = '<div class="car-section">Marca favoritos o elige un pais con emisoras</div>';
+  g.innerHTML = h;
+  g.querySelectorAll('.car-btn').forEach(btn => {
+    btn.onclick = () => { const all = [...state.favs, ...state.curated, ...state.stations]; const st = all.find(s => s.stationuuid === btn.dataset.uuid); if (st) { playStation(st); syncCarNow(); renderCarGrid(); } };
+  });
+}
+function carBtnHTML(st) {
+  const playing = state.current && state.current.stationuuid === st.stationuuid;
+  const initial = (st.name||'?').trim().charAt(0).toUpperCase();
+  const logo = (st.favicon && st.favicon.startsWith('http')) ? '<img src="'+st.favicon+'" onerror="this.parentNode.textContent=\''+initial+'\'">' : initial;
+  return '<div class="car-btn '+(playing?'playing':'')+'" data-uuid="'+st.stationuuid+'"><div class="cb-logo">'+logo+'</div><div class="cb-name">'+escapeHtml(st.name.trim())+'</div></div>';
+}
+function syncCarNow() {
+  const st = state.current; if (!st) return;
+  $('carNowName').textContent = st.name.trim();
+  const initial = (st.name||'?').trim().charAt(0).toUpperCase();
+  $('carNowLogo').innerHTML = (st.favicon && st.favicon.startsWith('http')) ? '<img src="'+st.favicon+'" onerror="this.parentNode.textContent=\''+initial+'\'">' : initial;
+  $('carNowStatus').textContent = state.playing ? 'En vivo' : 'Pausado';
+  const song = $('nowSong').textContent;
+  if (song && $('nowSong').style.display !== 'none') { $('carNowSong').textContent = song; $('carNowSong').style.display = 'block'; } else { $('carNowSong').style.display = 'none'; }
+  $('carPlay').innerHTML = state.playing ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>' : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+}
+$('carPlay').onclick = () => { if (!state.current) return; if (!audio.src || audio.src === location.href) { playStation(state.current); return; } if (audio.paused) audio.play(); else audio.pause(); setTimeout(syncCarNow, 100); };
+
 renderGenreFilters(); loadStations();
 </script>
 </body>
