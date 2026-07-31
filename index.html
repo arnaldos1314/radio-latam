@@ -228,7 +228,27 @@ function renderGenreFilters() {
     const chip = document.createElement('div');
     chip.className = 'chip' + (gr.tag === state.genre ? ' active' : '');
     chip.textContent = gr.label;
-    chip.onclick = () => { state.genre = gr.tag; renderGenreFilters(); loadStations(); chip.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); };
+    chip.onclick = () => { state.genre = gr.tag; // Restaurar ultima emisora al volver a la pagina
+(function restoreLast(){
+  try {
+    const raw = localStorage.getItem('radio_last');
+    if (!raw) return;
+    const st = JSON.parse(raw);
+    state.current = st;
+    $('nowBar').classList.add('show');
+    $('nowName').textContent = st.name.trim();
+    $('nowLogo').innerHTML = logoHTML(st);
+    if (!audio.paused && audio.src) {
+      $('nowStatus').textContent = 'En vivo'; $('nowStatus').classList.add('live');
+      $('playIcon').innerHTML = '<path d=\"M6 5h4v14H6zM14 5h4v14h-4z\"/>';
+    } else {
+      $('nowStatus').textContent = 'Toca play para reanudar';
+      $('playIcon').innerHTML = '<path d=\"M8 5v14l11-7z\"/>';
+    }
+    applyAmbientFromLogo(st);
+  } catch(e){}
+})();
+renderGenreFilters(); loadStations(); chip.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); };
     el.appendChild(chip);
   });
 }
@@ -348,7 +368,8 @@ function setAmbient(r,g,b){ const s=document.documentElement.style;
 function resetAmbient(){ const s=document.documentElement.style; s.setProperty('--amb1','#2a2a3e');s.setProperty('--amb2','#1a1a26');s.setProperty('--amb3','#12121a'); }
 function cl(v){ return Math.max(0,Math.min(255,Math.round(v))); }
 function playStation(st) {
-  state.current = st; audio.src = st.url_resolved; audio.play().catch(()=>{});
+  state.current = st;
+  try { localStorage.setItem('radio_last', JSON.stringify(st)); } catch(e){} audio.src = st.url_resolved; audio.play().catch(()=>{});
   $('nowBar').classList.add('show'); $('nowName').textContent = st.name.trim();
   $('nowStatus').textContent = 'Cargando...'; $('nowStatus').classList.remove('live');
   $('nowSong').style.display = 'none'; $('nowSong').textContent = '';
@@ -372,17 +393,25 @@ function startNowPlaying(st) {
   };
   poll(); state.nowTimer = setInterval(poll, 15000);
 }
-$('playBtn').onclick = () => { if (!state.current) return; if (audio.paused) audio.play(); else audio.pause(); };
+$('playBtn').onclick = () => { if (!state.current) return; if (!audio.src || audio.src === location.href) { playStation(state.current); return; } if (audio.paused) audio.play(); else audio.pause(); };
 audio.onplaying = () => { state.playing = true; $('nowStatus').textContent='En vivo'; $('nowStatus').classList.add('live'); $('playIcon').innerHTML='<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>'; renderList(); };
 audio.onpause = () => { state.playing = false; $('nowStatus').classList.remove('live'); $('nowStatus').textContent='Pausado'; $('playIcon').innerHTML='<path d="M8 5v14l11-7z"/>'; renderList(); };
 audio.onwaiting = () => { $('nowStatus').textContent='Buffer...'; };
 audio.onerror = () => { $('nowStatus').textContent='No disponible'; };
 function updateMediaSession(st) {
   if (!('mediaSession' in navigator)) return;
-  const art = st.favicon && st.favicon.startsWith('http') ? [{ src: st.favicon, sizes:'512x512', type:'image/png' }] : [];
-  navigator.mediaSession.metadata = new MediaMetadata({ title: st.name.trim(), artist: st.city || st.state || 'Radio LATAM', album: st.country || '', artwork: art });
-  navigator.mediaSession.setActionHandler('play', () => audio.play());
-  navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+  const art = st.favicon && st.favicon.startsWith('http') ? [
+    { src: st.favicon, sizes:'96x96', type:'image/png' },
+    { src: st.favicon, sizes:'256x256', type:'image/png' },
+    { src: st.favicon, sizes:'512x512', type:'image/png' }
+  ] : [];
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: st.name.trim(), artist: st.city || st.state || 'Radio LATAM', album: 'Radio LATAM', artwork: art });
+    navigator.mediaSession.playbackState = 'playing';
+    navigator.mediaSession.setActionHandler('play', () => { audio.play(); navigator.mediaSession.playbackState = 'playing'; });
+    navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); navigator.mediaSession.playbackState = 'paused'; });
+    navigator.mediaSession.setActionHandler('stop', () => { audio.pause(); });
+  } catch(e){}
 }
 document.querySelectorAll('.tab').forEach((t) => {
   t.onclick = () => {
@@ -405,6 +434,26 @@ $('search').oninput = (e) => {
 $('clear').onclick = () => { $('search').value=''; state.query=''; $('clear').classList.remove('show'); if (state.tab==='favs') renderList(); else loadStations(); };
 $('curFlag').textContent = state.country.flag;
 $('curName').textContent = state.country.name;
+// Restaurar ultima emisora al volver a la pagina
+(function restoreLast(){
+  try {
+    const raw = localStorage.getItem('radio_last');
+    if (!raw) return;
+    const st = JSON.parse(raw);
+    state.current = st;
+    $('nowBar').classList.add('show');
+    $('nowName').textContent = st.name.trim();
+    $('nowLogo').innerHTML = logoHTML(st);
+    if (!audio.paused && audio.src) {
+      $('nowStatus').textContent = 'En vivo'; $('nowStatus').classList.add('live');
+      $('playIcon').innerHTML = '<path d=\"M6 5h4v14H6zM14 5h4v14h-4z\"/>';
+    } else {
+      $('nowStatus').textContent = 'Toca play para reanudar';
+      $('playIcon').innerHTML = '<path d=\"M8 5v14l11-7z\"/>';
+    }
+    applyAmbientFromLogo(st);
+  } catch(e){}
+})();
 renderGenreFilters(); loadStations();
 </script>
 </body>
