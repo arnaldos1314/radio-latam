@@ -1,0 +1,50 @@
+[
+  {
+    "stationuuid": "ve-lamega-valencia",
+    "name": "La Mega 95.7 FM",
+    "state": "Carabobo",
+    "city": "Valencia",
+    "tags": "juvenil,pop,rock",
+    "country": "Venezuela",
+    "countrycode": "VE",
+    "url_resolved": "https://acp4.lorini.net:15004/stream",
+    "favicon": "",
+    "curated": true
+  },
+  {
+    "stationuuid": "ve-lamega-maracaibo",
+    "name": "La Mega 99.7 FM",
+    "state": "Zulia",
+    "city": "Maracaibo",
+    "tags": "juvenil,pop,rock",
+    "country": "Venezuela",
+    "countrycode": "VE",
+    "url_resolved": "https://acp4.lorini.net:30002/stream",
+    "favicon": "",
+    "curated": true
+  },
+  {
+    "stationuuid": "ve-lamega-maracay",
+    "name": "La Mega 96.5 FM",
+    "state": "Aragua",
+    "city": "Maracay",
+    "tags": "juvenil,pop,rock",
+    "country": "Venezuela",
+    "countrycode": "VE",
+    "url_resolved": "https://acp4.lorini.net:15010/stream",
+    "favicon": "",
+    "curated": true
+  },
+  {
+    "stationuuid": "ve-lamega-barquisimeto",
+    "name": "La Mega 100.9 FM",
+    "state": "Lara",
+    "city": "Barquisimeto",
+    "tags": "juvenil,pop,rock",
+    "country": "Venezuela",
+    "countrycode": "VE",
+    "url_resolved": "https://acp4.lorini.net:35000/stream",
+    "favicon": "",
+    "curated": true
+  }
+]

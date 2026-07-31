@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Radio LATAM">
+<meta name="theme-color" content="#12121a">
+<title>Radio LATAM</title>
+<style>
+  :root {
+    --text: #ffffff; --text-dim: rgba(255,255,255,0.62); --text-faint: rgba(255,255,255,0.38);
+    --glass: rgba(255,255,255,0.09); --glass-strong: rgba(255,255,255,0.15); --glass-line: rgba(255,255,255,0.14);
+    --radius: 16px; --radius-lg: 22px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-top: env(safe-area-inset-top, 0px);
+    --amb1: #2a2a3e; --amb2: #1a1a26; --amb3: #12121a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; color: var(--text); overflow: hidden; -webkit-font-smoothing: antialiased; position: relative; }
+  #ambient { position: fixed; inset: 0; z-index: -2; background: radial-gradient(120% 80% at 20% 0%, var(--amb1) 0%, transparent 55%), radial-gradient(120% 90% at 90% 20%, var(--amb2) 0%, transparent 60%), linear-gradient(180deg, var(--amb2) 0%, var(--amb3) 100%); transition: background 1.2s ease; }
+  #ambient::after { content: ''; position: absolute; inset: 0; background: radial-gradient(100% 60% at 50% 120%, rgba(0,0,0,0.55), transparent); }
+  #app { display: flex; flex-direction: column; height: 100dvh; }
+  header { padding: calc(var(--safe-top) + 20px) 20px 6px; flex-shrink: 0; }
+  .top-row { display: flex; align-items: flex-end; justify-content: space-between; }
+  .eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #ff453a; box-shadow: 0 0 8px #ff453a; animation: pulse 2s infinite; }
+  @keyframes pulse { 50% { opacity: 0.4; } }
+  h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.025em; }
+  .country-btn { display: flex; align-items: center; gap: 8px; background: var(--glass); border: 1px solid var(--glass-line); padding: 9px 14px; border-radius: 100px; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--text); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); transition: transform 0.15s; }
+  .country-btn:active { transform: scale(0.94); }
+  .country-btn .flag { font-size: 20px; line-height: 1; }
+  .country-btn .chev { opacity: 0.5; font-size: 11px; }
+  .tabs { display: flex; gap: 4px; margin-top: 16px; background: rgba(0,0,0,0.22); padding: 4px; border-radius: 13px; }
+  .tab { flex: 1; text-align: center; padding: 9px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--text-dim); cursor: pointer; border: none; background: none; transition: all 0.2s; }
+  .tab.active { background: var(--glass-strong); color: var(--text); }
+  .search-wrap { padding: 14px 20px 6px; flex-shrink: 0; }
+  .search { display: flex; align-items: center; gap: 10px; background: var(--glass); border: 1px solid var(--glass-line); border-radius: 13px; padding: 12px 14px; }
+  .search svg { flex-shrink: 0; opacity: 0.5; }
+  .search input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 16px; }
+  .search input::placeholder { color: var(--text-faint); }
+  .search .clear { color: var(--text-faint); cursor: pointer; font-size: 17px; display: none; }
+  .search .clear.show { display: block; }
+  .filters { display: flex; gap: 8px; overflow-x: auto; padding: 8px 20px 4px; flex-shrink: 0; scrollbar-width: none; }
+  .filters::-webkit-scrollbar { display: none; }
+  .chip { flex-shrink: 0; padding: 7px 15px; border-radius: 100px; background: var(--glass); border: 1px solid var(--glass-line); font-size: 13.5px; font-weight: 600; color: var(--text-dim); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .chip:active { transform: scale(0.94); }
+  .chip.active { background: var(--text); color: #000; border-color: var(--text); }
+  .list { flex: 1; overflow-y: auto; padding: 4px 12px 0; scrollbar-width: none; }
+  .list::-webkit-scrollbar { display: none; }
+  .section-label { font-size: 12.5px; font-weight: 600; color: var(--text-faint); padding: 12px 8px 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .station { display: flex; align-items: center; gap: 13px; padding: 9px 8px; border-radius: var(--radius); cursor: pointer; transition: background 0.15s; }
+  .station:active { background: var(--glass); }
+  .station.playing { background: var(--glass-strong); }
+  .logo { width: 54px; height: 54px; border-radius: 12px; flex-shrink: 0; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: var(--text-dim); overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
+  .logo img { width: 100%; height: 100%; object-fit: cover; }
+  .st-info { flex: 1; min-width: 0; }
+  .st-name { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .st-meta { font-size: 13px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .st-badge { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #ffd60a; margin-right: 6px; }
+  .st-fav { flex-shrink: 0; font-size: 21px; color: var(--text-faint); padding: 6px; cursor: pointer; }
+  .st-fav.on { color: #ffd60a; }
+  .bars { display: flex; align-items: flex-end; gap: 2.5px; height: 16px; flex-shrink: 0; padding: 0 6px; }
+  .bars span { width: 3px; background: var(--text); border-radius: 2px; }
+  .bars span:nth-child(1) { animation: bar 0.9s ease-in-out infinite; }
+  .bars span:nth-child(2) { animation: bar 0.9s ease-in-out 0.2s infinite; }
+  .bars span:nth-child(3) { animation: bar 0.9s ease-in-out 0.4s infinite; }
+  @keyframes bar { 0%,100% { height: 5px; } 50% { height: 16px; } }
+  .empty { text-align: center; color: var(--text-faint); padding: 50px 24px; font-size: 15px; white-space: pre-line; line-height: 1.6; }
+  .spinner { width: 30px; height: 30px; border: 3px solid var(--glass-line); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 70px auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .now-bar { flex-shrink: 0; margin: 0 12px calc(12px + var(--safe-bottom)); background: var(--glass-strong); border: 1px solid var(--glass-line); border-radius: var(--radius-lg); padding: 12px; display: flex; align-items: center; gap: 13px; transform: translateY(160%); transition: transform 0.4s cubic-bezier(0.22,1,0.36,1); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); box-shadow: 0 8px 30px rgba(0,0,0,0.35); }
+  .now-bar.show { transform: translateY(0); }
+  .now-logo { width: 50px; height: 50px; border-radius: 11px; flex-shrink: 0; background: rgba(255,255,255,0.1); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 700; }
+  .now-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .now-info { flex: 1; min-width: 0; }
+  .now-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .now-song { font-size: 13px; color: #ffd60a; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .now-status { font-size: 12.5px; color: var(--text-dim); margin-top: 2px; display: flex; align-items: center; gap: 5px; }
+  .now-status.live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #ff453a; box-shadow: 0 0 6px #ff453a; }
+  .play-btn { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; background: var(--text); color: #000; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.15s; }
+  .play-btn:active { transform: scale(0.9); }
+  .play-btn svg { width: 21px; height: 21px; }
+  .modal { position: fixed; inset: 0; z-index: 100; background: rgba(10,10,16,0.6); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); opacity: 0; pointer-events: none; transition: opacity 0.3s; display: flex; flex-direction: column; }
+  .modal.show { opacity: 1; pointer-events: auto; }
+  .modal-head { padding: calc(var(--safe-top) + 24px) 20px 14px; display: flex; align-items: center; justify-content: space-between; }
+  .modal-head h2 { font-size: 24px; font-weight: 800; }
+  .modal-close { width: 34px; height: 34px; border-radius: 50%; background: var(--glass); border: none; color: var(--text); font-size: 17px; cursor: pointer; }
+  .grid { flex: 1; overflow-y: auto; padding: 6px 16px calc(30px + var(--safe-bottom)); display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px; scrollbar-width: none; }
+  .grid::-webkit-scrollbar { display: none; }
+  .grid-item { background: var(--glass); border: 1px solid var(--glass-line); border-radius: var(--radius); padding: 18px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.15s, background 0.15s; }
+  .grid-item:active { transform: scale(0.93); }
+  .grid-item.active { background: var(--glass-strong); border-color: rgba(255,255,255,0.4); }
+  .grid-item .flag { font-size: 34px; line-height: 1; }
+  .grid-item .label { font-size: 12.5px; font-weight: 600; text-align: center; color: var(--text-dim); }
+  .grid-item.active .label { color: var(--text); }
+</style>
+</head>
+<body>
+<div id="ambient"></div>
+<div id="app">
+  <header>
+    <div class="top-row">
+      <div>
+        <div class="eyebrow"><span class="live-dot"></span>Radio en vivo</div>
+        <h1>LATAM</h1>
+      </div>
+      <button class="country-btn" id="countryBtn">
+        <span class="flag" id="curFlag"></span>
+        <span id="curName">Mexico</span>
+        <span class="chev">&#9660;</span>
+      </button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="explore">Explorar</button>
+      <button class="tab" data-tab="favs">Favoritos</button>
+    </div>
+  </header>
+  <div class="search-wrap">
+    <div class="search">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="search" placeholder="Buscar emisora o ciudad..." autocomplete="off">
+      <span class="clear" id="clear">&#10005;</span>
+    </div>
+  </div>
+  <div class="filters" id="stateFilters"></div>
+  <div class="filters" id="genreFilters"></div>
+  <div class="list" id="list"><div class="spinner"></div></div>
+  <div class="now-bar" id="nowBar">
+    <div class="now-logo" id="nowLogo">&#128251;</div>
+    <div class="now-info">
+      <div class="now-name" id="nowName">&mdash;</div>
+      <div class="now-song" id="nowSong" style="display:none"></div>
+      <div class="now-status" id="nowStatus">&mdash;</div>
+    </div>
+    <button class="play-btn" id="playBtn">
+      <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+  </div>
+</div>
+<div class="modal" id="modal">
+  <div class="modal-head"><h2>Elige pais</h2><button class="modal-close" id="modalClose">&#10005;</button></div>
+  <div class="grid" id="grid"></div>
+</div>
+<audio id="audio" crossorigin="anonymous"></audio>
+<canvas id="canvas" width="24" height="24" style="display:none"></canvas>
+<script>
+const API = 'https://de1.api.radio-browser.info/json';
+const COUNTRIES = [
+  { code: 'MX', name: 'Mexico', flag: '\u{1F1F2}\u{1F1FD}' },
+  { code: 'CO', name: 'Colombia', flag: '\u{1F1E8}\u{1F1F4}' },
+  { code: 'AR', name: 'Argentina', flag: '\u{1F1E6}\u{1F1F7}' },
+  { code: 'VE', name: 'Venezuela', flag: '\u{1F1FB}\u{1F1EA}', curated: true },
+  { code: 'PE', name: 'Peru', flag: '\u{1F1F5}\u{1F1EA}' },
+  { code: 'CL', name: 'Chile', flag: '\u{1F1E8}\u{1F1F1}' },
+  { code: 'EC', name: 'Ecuador', flag: '\u{1F1EA}\u{1F1E8}' },
+  { code: 'US', name: 'Miami / USA', flag: '\u{1F1FA}\u{1F1F8}', latinOnly: true },
+  { code: 'GT', name: 'Guatemala', flag: '\u{1F1EC}\u{1F1F9}' },
+  { code: 'CU', name: 'Cuba', flag: '\u{1F1E8}\u{1F1FA}' },
+  { code: 'DO', name: 'R. Dominicana', flag: '\u{1F1E9}\u{1F1F4}' },
+  { code: 'BO', name: 'Bolivia', flag: '\u{1F1E7}\u{1F1F4}' },
+  { code: 'HN', name: 'Honduras', flag: '\u{1F1ED}\u{1F1F3}' },
+  { code: 'PY', name: 'Paraguay', flag: '\u{1F1F5}\u{1F1FE}' },
+  { code: 'SV', name: 'El Salvador', flag: '\u{1F1F8}\u{1F1FB}' },
+  { code: 'NI', name: 'Nicaragua', flag: '\u{1F1F3}\u{1F1EE}' },
+  { code: 'CR', name: 'Costa Rica', flag: '\u{1F1E8}\u{1F1F7}' },
+  { code: 'PA', name: 'Panama', flag: '\u{1F1F5}\u{1F1E6}' },
+  { code: 'UY', name: 'Uruguay', flag: '\u{1F1FA}\u{1F1FE}' },
+  { code: 'PR', name: 'Puerto Rico', flag: '\u{1F1F5}\u{1F1F7}' },
+];
+const GENRES = [
+  { label: 'Todos', tag: '' }, { label: 'Salsa', tag: 'salsa' }, { label: 'Reggaeton', tag: 'reggaeton' },
+  { label: 'Merengue', tag: 'merengue' }, { label: 'Vallenato', tag: 'vallenato' }, { label: 'Bachata', tag: 'bachata' },
+  { label: 'Baladas', tag: 'balada' }, { label: 'Pop', tag: 'pop' }, { label: 'Rock', tag: 'rock' },
+  { label: 'Tropical', tag: 'tropical' }, { label: 'Cumbia', tag: 'cumbia' }, { label: 'Noticias', tag: 'news' },
+  { label: 'Cristiana', tag: 'christian' }, { label: 'Rancheras', tag: 'ranchera' },
+];
+const $ = (id) => document.getElementById(id);
+const audio = $('audio');
+const canvas = $('canvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+let state = {
+  country: COUNTRIES[0], stations: [], curated: [],
+  favs: JSON.parse(localStorage.getItem('radio_favs') || '[]'),
+  tab: 'explore', query: '', genre: '', stateFilter: '',
+  current: null, playing: false, searchToken: 0, nowTimer: null,
+};
+function renderGrid() {
+  const g = $('grid'); g.innerHTML = '';
+  COUNTRIES.forEach((c) => {
+    const item = document.createElement('div');
+    item.className = 'grid-item' + (c.code === state.country.code ? ' active' : '');
+    item.innerHTML = '<span class="flag">' + c.flag + '</span><span class="label">' + c.name + '</span>';
+    item.onclick = () => {
+      state.country = c; $('curFlag').textContent = c.flag; $('curName').textContent = c.name;
+      state.query = ''; $('search').value = ''; $('clear').classList.remove('show');
+      state.genre = ''; state.stateFilter = ''; closeModal(); loadStations();
+    };
+    g.appendChild(item);
+  });
+}
+function openModal() { renderGrid(); $('modal').classList.add('show'); }
+function closeModal() { $('modal').classList.remove('show'); }
+$('countryBtn').onclick = openModal;
+$('modalClose').onclick = closeModal;
+function renderStateFilters() {
+  const el = $('stateFilters');
+  const states = [...new Set(state.curated.map((s) => s.state).filter(Boolean))].sort();
+  if (states.length === 0) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'flex'; el.innerHTML = '';
+  const all = document.createElement('div');
+  all.className = 'chip' + (state.stateFilter === '' ? ' active' : '');
+  all.textContent = 'Todo el pais';
+  all.onclick = () => { state.stateFilter = ''; renderStateFilters(); renderList(); };
+  el.appendChild(all);
+  states.forEach((st) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (state.stateFilter === st ? ' active' : '');
+    chip.textContent = st;
+    chip.onclick = () => { state.stateFilter = st; renderStateFilters(); renderList(); chip.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); };
+    el.appendChild(chip);
+  });
+}
+function renderGenreFilters() {
+  const el = $('genreFilters'); el.innerHTML = '';
+  GENRES.forEach((gr) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (gr.tag === state.genre ? ' active' : '');
+    chip.textContent = gr.label;
+    chip.onclick = () => { state.genre = gr.tag; renderGenreFilters(); loadStations(); chip.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); };
+    el.appendChild(chip);
+  });
+}
+async function loadCurated(code) {
+  try {
+    const res = await fetch('/api/emisoras-ve');
+    if (!res.ok) return [];
+    const data = await res.json();
+    return code === 'VE' ? data : [];
+  } catch (e) { return []; }
+}
+async function loadStations() {
+  const token = ++state.searchToken;
+  state.stations = []; state.curated = [];
+  $('list').innerHTML = '<div class="spinner"></div>';
+  const c = state.country;
+  if (c.curated) {
+    const cur = await loadCurated(c.code);
+    if (token !== state.searchToken) return;
+    state.curated = cur; renderStateFilters();
+  } else { renderStateFilters(); }
+  let url = API + '/stations/search?countrycode=' + c.code + '&hidebroken=true&order=clickcount&reverse=true&limit=400';
+  if (c.latinOnly) url += '&language=spanish';
+  if (state.genre) url += '&tag=' + encodeURIComponent(state.genre);
+  if (state.query) url += '&name=' + encodeURIComponent(state.query);
+  try {
+    const res = await fetch(url); const data = await res.json();
+    if (token !== state.searchToken) return;
+    state.stations = data.filter((s) => s.url_resolved); renderList();
+  } catch (e) { if (token !== state.searchToken) return; state.stations = []; renderList(); }
+}
+function logoHTML(st) {
+  const initial = (st.name || '?').trim().charAt(0).toUpperCase();
+  if (st.favicon && st.favicon.startsWith('http')) {
+    return '<img src="' + st.favicon + '" crossorigin="anonymous" onerror="this.parentNode.textContent=\'' + initial + '\'" alt="">';
+  }
+  return initial;
+}
+function matchFilters(st) {
+  if (state.query) { const q = state.query.toLowerCase();
+    if (!((st.name||'').toLowerCase().includes(q) || (st.state||'').toLowerCase().includes(q) || (st.city||'').toLowerCase().includes(q) || (st.tags||'').toLowerCase().includes(q))) return false; }
+  if (state.genre && !(st.tags||'').toLowerCase().includes(state.genre)) return false;
+  if (state.stateFilter && (st.state||'') !== state.stateFilter) return false;
+  return true;
+}
+function renderList() {
+  const list = $('list');
+  if (state.tab === 'favs') {
+    let favs = state.favs;
+    if (state.query) { const q = state.query.toLowerCase(); favs = favs.filter((s)=>(s.name||'').toLowerCase().includes(q)); }
+    if (favs.length === 0) { list.innerHTML = '<div class="empty">Aun no tienes favoritos.\nToca la estrella en cualquier emisora.</div>'; return; }
+    list.innerHTML = favs.map((s)=>rowHTML(s)).join(''); attachRowEvents(); return;
+  }
+  const curated = state.curated.filter(matchFilters);
+  const browser = state.stations.filter((s) => state.stateFilter ? false : matchFilters(s));
+  if (curated.length === 0 && browser.length === 0) {
+    list.innerHTML = '<div class="empty">' + (state.query ? 'Sin resultados para "' + state.query + '"\nen ' + state.country.name : 'Sin emisoras disponibles') + '</div>'; return;
+  }
+  let html = '';
+  if (curated.length > 0) {
+    html += '<div class="section-label">Emisoras de ' + state.country.name + (state.stateFilter ? ' \u00b7 ' + state.stateFilter : '') + '</div>';
+    html += curated.map((s) => rowHTML(s, true)).join('');
+  }
+  if (browser.length > 0) {
+    if (curated.length > 0) html += '<div class="section-label">Mas emisoras</div>';
+    html += browser.map((s) => rowHTML(s, false)).join('');
+  }
+  list.innerHTML = html; attachRowEvents();
+}
+function rowHTML(st, isCurated) {
+  const isPlaying = state.current && state.current.stationuuid === st.stationuuid;
+  const isFav = state.favs.some((f) => f.stationuuid === st.stationuuid);
+  const loc = (st.city || st.state || '').trim();
+  const tags = (st.tags || '').split(',').slice(0, 2).filter(Boolean).join(' \u00b7 ');
+  const meta = [loc, tags].filter(Boolean).join('  \u00b7  ') || 'Radio';
+  const badge = isCurated ? '<span class="st-badge">\u2605 VE</span>' : '';
+  return '<div class="station ' + (isPlaying ? 'playing' : '') + '" data-uuid="' + st.stationuuid + '">' +
+    '<div class="logo">' + logoHTML(st) + '</div>' +
+    '<div class="st-info"><div class="st-name">' + escapeHtml(st.name.trim()) + '</div>' +
+    '<div class="st-meta">' + badge + escapeHtml(meta) + '</div></div>' +
+    (isPlaying && state.playing ? '<div class="bars"><span></span><span></span><span></span></div>' : '') +
+    '<div class="st-fav ' + (isFav ? 'on' : '') + '" data-fav="' + st.stationuuid + '">' + (isFav ? '\u2605' : '\u2606') + '</div></div>';
+}
+function attachRowEvents() {
+  const all = [...state.curated, ...state.stations, ...state.favs];
+  $('list').querySelectorAll('.station').forEach((row) => {
+    row.onclick = (e) => { if (e.target.dataset.fav) return; const st = all.find((s) => s.stationuuid === row.dataset.uuid); if (st) playStation(st); };
+  });
+  $('list').querySelectorAll('.st-fav').forEach((f) => {
+    f.onclick = (e) => { e.stopPropagation(); toggleFav(f.dataset.fav); };
+  });
+}
+function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function toggleFav(uuid) {
+  const all = [...state.curated, ...state.stations, ...state.favs];
+  const st = all.find((s) => s.stationuuid === uuid); if (!st) return;
+  const exists = state.favs.some((f) => f.stationuuid === uuid);
+  state.favs = exists ? state.favs.filter((f) => f.stationuuid !== uuid) : [...state.favs, st];
+  localStorage.setItem('radio_favs', JSON.stringify(state.favs)); renderList();
+}
+function applyAmbientFromLogo(st) {
+  if (!st.favicon || !st.favicon.startsWith('http')) { resetAmbient(); return; }
+  const img = new Image(); img.crossOrigin = 'anonymous';
+  img.onload = () => { try {
+    ctx.drawImage(img, 0, 0, 24, 24);
+    const data = ctx.getImageData(0, 0, 24, 24).data;
+    let r=0,g=0,b=0,count=0;
+    for (let i=0;i<data.length;i+=4){ if(data[i+3]<125)continue; r+=data[i];g+=data[i+1];b+=data[i+2];count++; }
+    if(!count){resetAmbient();return;} setAmbient(Math.round(r/count),Math.round(g/count),Math.round(b/count));
+  } catch(e){ resetAmbient(); } };
+  img.onerror = resetAmbient; img.src = st.favicon;
+}
+function setAmbient(r,g,b){ const s=document.documentElement.style;
+  s.setProperty('--amb1','rgb('+cl(r*1.15)+','+cl(g*1.15)+','+cl(b*1.15)+')');
+  s.setProperty('--amb2','rgb('+cl(r*0.5)+','+cl(g*0.5)+','+cl(b*0.5)+')');
+  s.setProperty('--amb3','rgb('+cl(r*0.22)+','+cl(g*0.22)+','+cl(b*0.22)+')'); }
+function resetAmbient(){ const s=document.documentElement.style; s.setProperty('--amb1','#2a2a3e');s.setProperty('--amb2','#1a1a26');s.setProperty('--amb3','#12121a'); }
+function cl(v){ return Math.max(0,Math.min(255,Math.round(v))); }
+function playStation(st) {
+  state.current = st; audio.src = st.url_resolved; audio.play().catch(()=>{});
+  $('nowBar').classList.add('show'); $('nowName').textContent = st.name.trim();
+  $('nowStatus').textContent = 'Cargando...'; $('nowStatus').classList.remove('live');
+  $('nowSong').style.display = 'none'; $('nowSong').textContent = '';
+  $('nowLogo').innerHTML = logoHTML(st);
+  applyAmbientFromLogo(st); updateMediaSession(st); startNowPlaying(st); renderList();
+}
+function startNowPlaying(st) {
+  if (state.nowTimer) clearInterval(state.nowTimer);
+  const poll = async () => {
+    if (!state.current || state.current.stationuuid !== st.stationuuid) return;
+    try {
+      const res = await fetch('/api/nowplaying?url=' + encodeURIComponent(st.url_resolved));
+      const m = await res.json();
+      if (!state.current || state.current.stationuuid !== st.stationuuid) return;
+      const song = (m.title || '').trim();
+      if (song && song.toLowerCase() !== st.name.trim().toLowerCase()) {
+        $('nowSong').textContent = song; $('nowSong').style.display = 'block';
+        if ('mediaSession' in navigator && navigator.mediaSession.metadata) navigator.mediaSession.metadata.title = song;
+      } else { $('nowSong').style.display = 'none'; }
+    } catch (e) {}
+  };
+  poll(); state.nowTimer = setInterval(poll, 15000);
+}
+$('playBtn').onclick = () => { if (!state.current) return; if (audio.paused) audio.play(); else audio.pause(); };
+audio.onplaying = () => { state.playing = true; $('nowStatus').textContent='En vivo'; $('nowStatus').classList.add('live'); $('playIcon').innerHTML='<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>'; renderList(); };
+audio.onpause = () => { state.playing = false; $('nowStatus').classList.remove('live'); $('nowStatus').textContent='Pausado'; $('playIcon').innerHTML='<path d="M8 5v14l11-7z"/>'; renderList(); };
+audio.onwaiting = () => { $('nowStatus').textContent='Buffer...'; };
+audio.onerror = () => { $('nowStatus').textContent='No disponible'; };
+function updateMediaSession(st) {
+  if (!('mediaSession' in navigator)) return;
+  const art = st.favicon && st.favicon.startsWith('http') ? [{ src: st.favicon, sizes:'512x512', type:'image/png' }] : [];
+  navigator.mediaSession.metadata = new MediaMetadata({ title: st.name.trim(), artist: st.city || st.state || 'Radio LATAM', album: st.country || '', artwork: art });
+  navigator.mediaSession.setActionHandler('play', () => audio.play());
+  navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+}
+document.querySelectorAll('.tab').forEach((t) => {
+  t.onclick = () => {
+    document.querySelectorAll('.tab').forEach((x) => x.classList.remove('active'));
+    t.classList.add('active'); state.tab = t.dataset.tab;
+    const hide = state.tab === 'favs';
+    $('countryBtn').style.visibility = hide ? 'hidden' : 'visible';
+    $('genreFilters').style.display = hide ? 'none' : 'flex';
+    $('stateFilters').style.display = hide ? 'none' : ($('stateFilters').children.length ? 'flex' : 'none');
+    renderList();
+  };
+});
+let searchTimer = null;
+$('search').oninput = (e) => {
+  state.query = e.target.value.trim();
+  $('clear').classList.toggle('show', state.query.length > 0);
+  if (state.tab === 'favs') { renderList(); return; }
+  clearTimeout(searchTimer); searchTimer = setTimeout(() => loadStations(), 350);
+};
+$('clear').onclick = () => { $('search').value=''; state.query=''; $('clear').classList.remove('show'); if (state.tab==='favs') renderList(); else loadStations(); };
+$('curFlag').textContent = state.country.flag;
+$('curName').textContent = state.country.name;
+renderGenreFilters(); loadStations();
+</script>
+</body>
+</html>

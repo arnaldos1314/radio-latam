@@ -1,0 +1,10 @@
+{
+  "name": "Radio LATAM",
+  "short_name": "Radio LATAM",
+  "description": "Emisoras de Latinoamerica sin anuncios",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0c",
+  "theme_color": "#12121a",
+  "orientation": "portrait"
+}
