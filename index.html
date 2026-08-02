@@ -196,7 +196,7 @@
 <audio id="audio" crossorigin="anonymous"></audio>
 <canvas id="canvas" width="24" height="24" style="display:none"></canvas>
 <script>
-const API = 'https://de1.api.radio-browser.info/json';
+const API = 'https://de1.api.radio-browser.info/json'; const API_SEARCH = '/api/stations';
 const COUNTRIES = [
   { code: 'MX', name: 'Mexico', flag: '\u{1F1F2}\u{1F1FD}' },
   { code: 'CO', name: 'Colombia', flag: '\u{1F1E8}\u{1F1F4}' },
@@ -354,7 +354,16 @@ function syncCarNow() {
 }
 $('carPlay').onclick = () => { if (!state.current) return; if (!audio.src || audio.src === location.href) { playStation(state.current); return; } if (audio.paused) audio.play(); else audio.pause(); setTimeout(syncCarNow, 100); };
 
-renderGenreFilters(); loadStations(); chip.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); };
+renderGenreFilters();
+// Si hay favoritos guardados, abrir en la pestana Favoritos
+if (state.favs && state.favs.length > 0) {
+  state.tab = 'favs';
+  document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('active', x.dataset.tab === 'favs'));
+  $('countryBtn').style.visibility = 'hidden';
+  $('genreFilters').style.display = 'none';
+  $('stateFilters').style.display = 'none';
+}
+loadStations(); chip.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); };
     el.appendChild(chip);
   });
 }
@@ -376,7 +385,7 @@ async function loadStations() {
     if (token !== state.searchToken) return;
     state.curated = cur; renderStateFilters();
   } else { renderStateFilters(); }
-  let url = API + '/stations/search?countrycode=' + c.code + '&hidebroken=true&order=clickcount&reverse=true&limit=400';
+  let url = API_SEARCH + '?countrycode=' + c.code + '&hidebroken=true&order=clickcount&reverse=true&limit=400';
   if (c.latinOnly) url += '&language=spanish';
   if (state.genre) url += '&tag=' + encodeURIComponent(state.genre);
   if (state.query) url += '&name=' + encodeURIComponent(state.query);
@@ -560,7 +569,16 @@ $('curName').textContent = state.country.name;
     applyAmbientFromLogo(st);
   } catch(e){}
 })();
-renderGenreFilters(); loadStations();
+renderGenreFilters();
+// Si hay favoritos guardados, abrir en la pestana Favoritos
+if (state.favs && state.favs.length > 0) {
+  state.tab = 'favs';
+  document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('active', x.dataset.tab === 'favs'));
+  $('countryBtn').style.visibility = 'hidden';
+  $('genreFilters').style.display = 'none';
+  $('stateFilters').style.display = 'none';
+}
+loadStations();
 </script>
 </body>
 </html>

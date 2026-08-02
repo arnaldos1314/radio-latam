@@ -128,6 +128,16 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify(pop));
   }
 
+
+  // Proxy a Radio-Browser (evita CORS)
+  if (u.pathname === '/api/stations') {
+    const qs = u.search || '';
+    const rbUrl = 'https://de1.api.radio-browser.info/json/stations/search' + qs;
+    const data = await httpsGetJson(rbUrl);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(data || []));
+  }
+
   let filePath = path.join(WEB, u.pathname === '/' ? 'index.html' : u.pathname);
   if (!filePath.startsWith(WEB)) { res.writeHead(403); return res.end('forbidden'); }
   fs.readFile(filePath, (err, data) => {
