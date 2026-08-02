@@ -132,7 +132,14 @@ const server = http.createServer(async (req, res) => {
   if (!filePath.startsWith(WEB)) { res.writeHead(403); return res.end('forbidden'); }
   fs.readFile(filePath, (err, data) => {
     if (err) { res.writeHead(404); return res.end('not found'); }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream' });
+    const headers = { 'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream' };
+    // No cachear HTML (para que los cambios se vean de inmediato)
+    if (filePath.endsWith('.html') || u.pathname === '/') {
+      headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+      headers['Pragma'] = 'no-cache';
+      headers['Expires'] = '0';
+    }
+    res.writeHead(200, headers);
     res.end(data);
   });
 });

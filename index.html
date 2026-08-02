@@ -560,44 +560,6 @@ $('curName').textContent = state.country.name;
     applyAmbientFromLogo(st);
   } catch(e){}
 })();
-
-async function openCarMode() { $('carMode').classList.add('show'); $('carCountryTitle').textContent = state.country.name; renderCarCountries(); renderCarGrid(); syncCarNow(); if (popularesData.length === 0) { await loadPopulares(); renderCarGrid(); } }
-function closeCarMode() { $('carMode').classList.remove('show'); }
-$('carToggle').onclick = openCarMode;
-$('carExit').onclick = closeCarMode;
-function renderCarGrid() {
-  const g = $('carGrid');
-  const favs = state.favs;
-  const favIds = new Set(favs.map(f => f.stationuuid));
-  const pool = [...state.curated, ...state.stations].filter(s => !favIds.has(s.stationuuid));
-  const top = pool.slice(0, 6);
-  let h = '';
-  if (favs.length > 0) { h += '<div class="car-section">Favoritos</div>' + favs.map(carBtnHTML).join(''); }
-  if (top.length > 0) { h += '<div class="car-section">' + (favs.length ? 'Mas escuchadas' : 'Emisoras') + '</div>' + top.map(carBtnHTML).join(''); }
-  if (!h) h = '<div class="car-section">Marca favoritos o elige un pais con emisoras</div>';
-  g.innerHTML = h;
-  g.querySelectorAll('.car-btn').forEach(btn => {
-    btn.onclick = () => { const all = [...state.favs, ...state.curated, ...state.stations]; const st = all.find(s => s.stationuuid === btn.dataset.uuid); if (st) { playStation(st); syncCarNow(); renderCarGrid(); } };
-  });
-}
-function carBtnHTML(st) {
-  const playing = state.current && state.current.stationuuid === st.stationuuid;
-  const initial = (st.name||'?').trim().charAt(0).toUpperCase();
-  const logo = (st.favicon && st.favicon.startsWith('http')) ? '<img src="'+st.favicon+'" onerror="this.parentNode.textContent=\''+initial+'\'">' : initial;
-  return '<div class="car-btn '+(playing?'playing':'')+'" data-uuid="'+st.stationuuid+'"><div class="cb-logo">'+logo+'</div><div class="cb-name">'+escapeHtml(st.name.trim())+'</div></div>';
-}
-function syncCarNow() {
-  const st = state.current; if (!st) return;
-  $('carNowName').textContent = st.name.trim();
-  const initial = (st.name||'?').trim().charAt(0).toUpperCase();
-  $('carNowLogo').innerHTML = (st.favicon && st.favicon.startsWith('http')) ? '<img src="'+st.favicon+'" onerror="this.parentNode.textContent=\''+initial+'\'">' : initial;
-  $('carNowStatus').textContent = state.playing ? 'En vivo' : 'Pausado';
-  const song = $('nowSong').textContent;
-  if (song && $('nowSong').style.display !== 'none') { $('carNowSong').textContent = song; $('carNowSong').style.display = 'block'; } else { $('carNowSong').style.display = 'none'; }
-  $('carPlay').innerHTML = state.playing ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>' : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-}
-$('carPlay').onclick = () => { if (!state.current) return; if (!audio.src || audio.src === location.href) { playStation(state.current); return; } if (audio.paused) audio.play(); else audio.pause(); setTimeout(syncCarNow, 100); };
-
 renderGenreFilters(); loadStations();
 </script>
 </body>
