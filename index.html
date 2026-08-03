@@ -299,7 +299,25 @@ function renderGenreFilters() {
   } catch(e){}
 })();
 
-async function openCarMode() { $('carMode').classList.add('show'); $('carCountryTitle').textContent = state.country.name; renderCarCountries(); renderCarGrid(); syncCarNow(); if (popularesData.length === 0) { await loadPopulares(); renderCarGrid(); } }
+async function openCarMode() {
+  try {
+    document.getElementById('carMode').classList.add('show');
+    var t = document.getElementById('carCountryTitle');
+    if (t) t.textContent = state.country.name;
+    if (typeof renderCarCountries === 'function') renderCarCountries();
+    if (typeof renderCarGrid === 'function') renderCarGrid();
+    if (typeof syncCarNow === 'function') syncCarNow();
+    if (typeof loadPopulares === 'function' && (!window.popularesData || popularesData.length === 0)) {
+      await loadPopulares();
+      if (typeof renderCarGrid === 'function') renderCarGrid();
+    }
+  } catch (err) {
+    var d = document.createElement('div');
+    d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#c00;color:#fff;padding:14px;font:14px monospace';
+    d.textContent = 'CAR ERROR: ' + err.message;
+    document.body.appendChild(d);
+  }
+}
 function closeCarMode() { $('carMode').classList.remove('show'); }
 $('carToggle').onclick = openCarMode;
 $('carExit').onclick = closeCarMode;
