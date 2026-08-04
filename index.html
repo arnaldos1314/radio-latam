@@ -319,8 +319,13 @@ async function openCarMode() {
   }
 }
 function closeCarMode() { $('carMode').classList.remove('show'); }
-$('carToggle').onclick = openCarMode;
-$('carExit').onclick = closeCarMode;
+document.addEventListener('click', function(ev){
+  var t = ev.target.closest ? ev.target.closest('#carToggle') : null;
+  if (t) { ev.preventDefault(); openCarMode(); }
+  var x = ev.target.closest ? ev.target.closest('#carExit') : null;
+  if (x) { ev.preventDefault(); closeCarMode(); }
+});
+
 function renderCarCountries() {
   const bar = $('carCountryBar');
   bar.innerHTML = '';
